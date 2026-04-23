@@ -1,0 +1,10 @@
+[package]
+name = "onload-sys"
+version = "0.1.0"
+edition = "2021"
+links = "ciul"
+
+[build-dependencies]
+bindgen = "0.70"
+cc = "1.0"
+pkg-config = "0.3"
