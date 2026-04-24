@@ -17,6 +17,7 @@ const ETHERFABRIC_HEADERS: &[&str] = &[
     "etherfabric/pio.h",
     "etherfabric/checksum.h",
     "etherfabric/capabilities.h",
+    "etherfabric/vi.h",
 ];
 
 const WRAPPERS: &[MacroWrapper] = &[
