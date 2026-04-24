@@ -162,6 +162,24 @@ const WRAPPERS: &[MacroWrapper] = &[
     MacroWrapper { name: "EF_EVENT_TX_ALT_ALT_ID",               ret: "unsigned", args: &[("ef_event", "e")] },
     MacroWrapper { name: "EF_EVENT_RX_NO_DESC_TRUNC_Q_ID",       ret: "unsigned", args: &[("ef_event", "e")] },
     MacroWrapper { name: "EF_EVENT_SW_DATA",                     ret: "unsigned", args: &[("ef_event", "e")] },
+    // ── Event queue ───────────────────────────────────────────────────────────
+    MacroWrapper {
+        name: "ef_eventq_poll",
+        ret: "int",
+        args: &[("ef_vi*", "evq"), ("ef_event*", "evs"), ("int", "evs_len")],
+    },
+    // ── Memory region ─────────────────────────────────────────────────────────
+    MacroWrapper {
+        name: "ef_memreg_dma_addr",
+        ret: "ef_addr",
+        args: &[("ef_memreg*", "mr"), ("size_t", "offset")],
+    },
+    // ── Receive prefix ────────────────────────────────────────────────────────
+    MacroWrapper {
+        name: "ef_vi_receive_prefix_len",
+        ret: "int",
+        args: &[("const ef_vi*", "vi")],
+    },
 ];
 
 // ── Code-generation helpers ───────────────────────────────────────────────────
