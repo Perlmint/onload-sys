@@ -10,6 +10,15 @@ struct MacroWrapper {
     args: &'static [(&'static str, &'static str)],
 }
 
+// Static inline functions cannot be #undef'd, so the exported symbol must use
+// a different name (alias) to avoid a redefinition conflict.
+struct InlineWrapper {
+    name: &'static str,
+    alias: &'static str,
+    ret: &'static str,
+    args: &'static [(&'static str, &'static str)],
+}
+
 const ETHERFABRIC_HEADERS: &[&str] = &[
     "etherfabric/ef_vi.h",
     "etherfabric/pd.h",
@@ -168,15 +177,20 @@ const WRAPPERS: &[MacroWrapper] = &[
         ret: "int",
         args: &[("ef_vi*", "evq"), ("ef_event*", "evs"), ("int", "evs_len")],
     },
+];
+
+const INLINE_WRAPPERS: &[InlineWrapper] = &[
     // ── Memory region ─────────────────────────────────────────────────────────
-    MacroWrapper {
+    InlineWrapper {
         name: "ef_memreg_dma_addr",
+        alias: "ef_memreg_dma_addr_wrap",
         ret: "ef_addr",
         args: &[("ef_memreg*", "mr"), ("size_t", "offset")],
     },
     // ── Receive prefix ────────────────────────────────────────────────────────
-    MacroWrapper {
+    InlineWrapper {
         name: "ef_vi_receive_prefix_len",
+        alias: "ef_vi_receive_prefix_len_wrap",
         ret: "int",
         args: &[("const ef_vi*", "vi")],
     },
@@ -202,7 +216,7 @@ fn impl_name(name: &str) -> String {
     format!("_impl_{name}")
 }
 
-fn generate_header(wrappers: &[MacroWrapper]) -> String {
+fn generate_header(wrappers: &[MacroWrapper], inlines: &[InlineWrapper]) -> String {
     let mut out = String::new();
     for h in ETHERFABRIC_HEADERS {
         out.push_str(&format!("#include <{h}>\n"));
@@ -217,10 +231,18 @@ fn generate_header(wrappers: &[MacroWrapper]) -> String {
             args = arg_list(w.args),
         ));
     }
+    for w in inlines {
+        out.push_str(&format!(
+            "extern {ret} {alias}({args});\n",
+            ret = w.ret,
+            alias = w.alias,
+            args = arg_list(w.args),
+        ));
+    }
     out
 }
 
-fn generate_source(wrappers: &[MacroWrapper]) -> String {
+fn generate_source(wrappers: &[MacroWrapper], inlines: &[InlineWrapper]) -> String {
     let mut out = String::new();
 
     for h in ETHERFABRIC_HEADERS {
@@ -242,15 +264,28 @@ fn generate_source(wrappers: &[MacroWrapper]) -> String {
             args = arg_list(w.args),
         ));
     }
+    for w in inlines {
+        let body = if w.ret == "void" {
+            format!("{{ {}({}); }}", w.name, call_args(w.args))
+        } else {
+            format!("{{ return {}({}); }}", w.name, call_args(w.args))
+        };
+        out.push_str(&format!(
+            "static inline {ret} {impl_name}({args}) {body}\n",
+            ret = w.ret,
+            impl_name = impl_name(w.alias),
+            args = arg_list(w.args),
+        ));
+    }
 
-    // Step 2 – undef all macros
+    // Step 2 – undef macros (inlines cannot be undef'd)
     out.push_str("\n/* Step 2: undefine all macros */\n");
     for w in wrappers {
         out.push_str(&format!("#undef {}\n", w.name));
     }
 
     // Step 3 – real linkable functions
-    out.push_str("\n/* Step 3: real linkable symbols with original names */\n");
+    out.push_str("\n/* Step 3: real linkable symbols */\n");
     for w in wrappers {
         let body = if w.ret == "void" {
             format!("{{ {}({}); }}", impl_name(w.name), call_args(w.args))
@@ -261,6 +296,19 @@ fn generate_source(wrappers: &[MacroWrapper]) -> String {
             "{ret} {name}({args}) {body}\n",
             ret = w.ret,
             name = w.name,
+            args = arg_list(w.args),
+        ));
+    }
+    for w in inlines {
+        let body = if w.ret == "void" {
+            format!("{{ {}({}); }}", impl_name(w.alias), call_args(w.args))
+        } else {
+            format!("{{ return {}({}); }}", impl_name(w.alias), call_args(w.args))
+        };
+        out.push_str(&format!(
+            "{ret} {alias}({args}) {body}\n",
+            ret = w.ret,
+            alias = w.alias,
             args = arg_list(w.args),
         ));
     }
@@ -319,12 +367,12 @@ fn main() {
 
     std::fs::File::create(&wrapper_h)
         .unwrap()
-        .write_all(generate_header(WRAPPERS).as_bytes())
+        .write_all(generate_header(WRAPPERS, INLINE_WRAPPERS).as_bytes())
         .unwrap();
 
     std::fs::File::create(&wrapper_c)
         .unwrap()
-        .write_all(generate_source(WRAPPERS).as_bytes())
+        .write_all(generate_source(WRAPPERS, INLINE_WRAPPERS).as_bytes())
         .unwrap();
 
     // Phase 3 – compile wrapper.c
