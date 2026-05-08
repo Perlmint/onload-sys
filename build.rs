@@ -8,6 +8,8 @@ struct MacroWrapper {
     ret: &'static str,
     // (c_type, arg_name)
     args: &'static [(&'static str, &'static str)],
+    // minimum major version (8 = all supported versions, 9 = v9+ only)
+    min_version: u8,
 }
 
 // Static inline functions cannot be #undef'd, so the exported symbol must use
@@ -35,21 +37,25 @@ const WRAPPERS: &[MacroWrapper] = &[
         name: "ef_vi_receive_init",
         ret: "int",
         args: &[("ef_vi*", "vi"), ("ef_addr", "addr"), ("ef_request_id", "dma_id")],
+        min_version: 8,
     },
     MacroWrapper {
         name: "ef_vi_receive_push",
         ret: "void",
         args: &[("ef_vi*", "vi")],
+        min_version: 8,
     },
     MacroWrapper {
         name: "ef_vi_receive_set_discards",
         ret: "int",
         args: &[("ef_vi*", "vi"), ("unsigned", "flags")],
+        min_version: 8,
     },
     MacroWrapper {
         name: "ef_vi_receive_get_discards",
         ret: "unsigned",
         args: &[("ef_vi*", "vi")],
+        min_version: 8,
     },
     // ── Transmit ──────────────────────────────────────────────────────────────
     MacroWrapper {
@@ -61,6 +67,7 @@ const WRAPPERS: &[MacroWrapper] = &[
             ("int", "len"),
             ("ef_request_id", "dma_id"),
         ],
+        min_version: 8,
     },
     MacroWrapper {
         name: "ef_vi_transmitv",
@@ -71,6 +78,7 @@ const WRAPPERS: &[MacroWrapper] = &[
             ("int", "iov_len"),
             ("ef_request_id", "dma_id"),
         ],
+        min_version: 8,
     },
     MacroWrapper {
         name: "ef_vi_transmitv_init",
@@ -81,11 +89,13 @@ const WRAPPERS: &[MacroWrapper] = &[
             ("int", "iov_len"),
             ("ef_request_id", "dma_id"),
         ],
+        min_version: 8,
     },
     MacroWrapper {
         name: "ef_vi_transmit_push",
         ret: "void",
         args: &[("ef_vi*", "vi")],
+        min_version: 8,
     },
     MacroWrapper {
         name: "ef_vi_transmit_pio",
@@ -96,6 +106,7 @@ const WRAPPERS: &[MacroWrapper] = &[
             ("int", "len"),
             ("ef_request_id", "dma_id"),
         ],
+        min_version: 8,
     },
     MacroWrapper {
         name: "ef_vi_transmit_copy_pio",
@@ -107,11 +118,13 @@ const WRAPPERS: &[MacroWrapper] = &[
             ("int", "len"),
             ("ef_request_id", "dma_id"),
         ],
+        min_version: 8,
     },
     MacroWrapper {
         name: "ef_vi_transmit_pio_warm",
         ret: "void",
         args: &[("ef_vi*", "vi")],
+        min_version: 8,
     },
     MacroWrapper {
         name: "ef_vi_transmit_copy_pio_warm",
@@ -122,60 +135,75 @@ const WRAPPERS: &[MacroWrapper] = &[
             ("const void*", "src"),
             ("int", "len"),
         ],
+        min_version: 8,
     },
     MacroWrapper {
         name: "ef_vi_transmit_alt_select",
         ret: "int",
         args: &[("ef_vi*", "vi"), ("unsigned", "alt_id")],
+        min_version: 8,
     },
     MacroWrapper {
         name: "ef_vi_transmit_alt_select_normal",
         ret: "int",
         args: &[("ef_vi*", "vi")],
+        min_version: 8,
     },
     MacroWrapper {
         name: "ef_vi_transmit_alt_stop",
         ret: "int",
         args: &[("ef_vi*", "vi"), ("unsigned", "alt_id")],
+        min_version: 8,
     },
     // ── EF_EVENT_* accessors (ef_event passed by value, ~16 bytes) ────────────
-    MacroWrapper { name: "EF_EVENT_TYPE",                        ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_RX_BYTES",                    ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_RX_Q_ID",                     ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_RX_RQ_ID",                    ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_RX_CONT",                     ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_RX_SOP",                      ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_RX_ISCSI_OKAY",               ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_RX_PS_NEXT_BUFFER",           ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_TX_Q_ID",                     ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_TX_CTPIO",                    ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_RX_DISCARD_Q_ID",             ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_RX_DISCARD_RQ_ID",            ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_RX_DISCARD_CONT",             ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_RX_DISCARD_SOP",              ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_RX_DISCARD_TYPE",             ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_RX_DISCARD_BYTES",            ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_RX_MULTI_Q_ID",               ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_RX_MULTI_CONT",               ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_RX_MULTI_SOP",                ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_RX_MULTI_DISCARD_TYPE",       ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_TX_ERROR_Q_ID",               ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_TX_ERROR_TYPE",               ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_TX_WITH_TIMESTAMP_Q_ID",      ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_TX_WITH_TIMESTAMP_RQ_ID",     ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_TX_WITH_TIMESTAMP_SEC",       ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_TX_WITH_TIMESTAMP_NSEC",      ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_TX_WITH_TIMESTAMP_NSEC_FRAC16", ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_TX_WITH_TIMESTAMP_SYNC_FLAGS", ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_TX_ALT_Q_ID",                 ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_TX_ALT_ALT_ID",               ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_RX_NO_DESC_TRUNC_Q_ID",       ret: "unsigned", args: &[("ef_event", "e")] },
-    MacroWrapper { name: "EF_EVENT_SW_DATA",                     ret: "unsigned", args: &[("ef_event", "e")] },
+    MacroWrapper { name: "EF_EVENT_TYPE",                          ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_RX_BYTES",                      ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_RX_Q_ID",                       ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_RX_RQ_ID",                      ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_RX_CONT",                       ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_RX_SOP",                        ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_RX_ISCSI_OKAY",                 ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_RX_PS_NEXT_BUFFER",             ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_TX_Q_ID",                       ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_TX_CTPIO",                      ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_RX_DISCARD_Q_ID",               ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_RX_DISCARD_RQ_ID",              ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_RX_DISCARD_CONT",               ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_RX_DISCARD_SOP",                ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_RX_DISCARD_TYPE",               ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_RX_DISCARD_BYTES",              ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_RX_MULTI_Q_ID",                 ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_RX_MULTI_CONT",                 ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_RX_MULTI_SOP",                  ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_RX_MULTI_DISCARD_TYPE",         ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_TX_ERROR_Q_ID",                 ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_TX_ERROR_TYPE",                 ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_TX_WITH_TIMESTAMP_Q_ID",        ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_TX_WITH_TIMESTAMP_RQ_ID",       ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_TX_WITH_TIMESTAMP_SEC",         ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_TX_WITH_TIMESTAMP_NSEC",        ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_TX_WITH_TIMESTAMP_NSEC_FRAC16", ret: "unsigned", args: &[("ef_event", "e")], min_version: 9 },
+    MacroWrapper { name: "EF_EVENT_TX_WITH_TIMESTAMP_SYNC_FLAGS",  ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_TX_ALT_Q_ID",                   ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_TX_ALT_ALT_ID",                 ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_RX_NO_DESC_TRUNC_Q_ID",         ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    MacroWrapper { name: "EF_EVENT_SW_DATA",                       ret: "unsigned", args: &[("ef_event", "e")], min_version: 8 },
+    // ── EFCT RX_REF events (v9+) ──────────────────────────────────────────────
+    MacroWrapper { name: "EF_EVENT_RX_REF_Q_ID",           ret: "unsigned", args: &[("ef_event", "e")], min_version: 9 },
+    MacroWrapper { name: "EF_EVENT_RX_REF_LEN",            ret: "unsigned", args: &[("ef_event", "e")], min_version: 9 },
+    MacroWrapper { name: "EF_EVENT_RX_REF_PKT_ID",         ret: "unsigned", args: &[("ef_event", "e")], min_version: 9 },
+    MacroWrapper { name: "EF_EVENT_RX_REF_FILTER_ID",      ret: "unsigned", args: &[("ef_event", "e")], min_version: 9 },
+    MacroWrapper { name: "EF_EVENT_RX_REF_USER",           ret: "unsigned", args: &[("ef_event", "e")], min_version: 9 },
+    MacroWrapper { name: "EF_EVENT_RX_REF_DISCARD_Q_ID",   ret: "unsigned", args: &[("ef_event", "e")], min_version: 9 },
+    MacroWrapper { name: "EF_EVENT_RX_REF_DISCARD_LEN",    ret: "unsigned", args: &[("ef_event", "e")], min_version: 9 },
+    MacroWrapper { name: "EF_EVENT_RX_REF_DISCARD_PKT_ID", ret: "unsigned", args: &[("ef_event", "e")], min_version: 9 },
+    MacroWrapper { name: "EF_EVENT_RX_REF_DISCARD_FLAGS",  ret: "unsigned", args: &[("ef_event", "e")], min_version: 9 },
     // ── Event queue ───────────────────────────────────────────────────────────
     MacroWrapper {
         name: "ef_eventq_poll",
         ret: "int",
         args: &[("ef_vi*", "evq"), ("ef_event*", "evs"), ("int", "evs_len")],
+        min_version: 8,
     },
 ];
 
@@ -216,13 +244,14 @@ fn impl_name(name: &str) -> String {
     format!("_impl_{name}")
 }
 
-fn generate_header(wrappers: &[MacroWrapper], inlines: &[InlineWrapper]) -> String {
+fn generate_header(wrappers: &[MacroWrapper], inlines: &[InlineWrapper], version: u8) -> String {
+    let wrappers: Vec<&MacroWrapper> = wrappers.iter().filter(|w| w.min_version <= version).collect();
     let mut out = String::new();
     for h in ETHERFABRIC_HEADERS {
         out.push_str(&format!("#include <{h}>\n"));
     }
     out.push('\n');
-    for w in wrappers {
+    for w in &wrappers {
         out.push_str(&format!("#undef {}\n", w.name));
         out.push_str(&format!(
             "extern {ret} {name}({args});\n",
@@ -242,7 +271,8 @@ fn generate_header(wrappers: &[MacroWrapper], inlines: &[InlineWrapper]) -> Stri
     out
 }
 
-fn generate_source(wrappers: &[MacroWrapper], inlines: &[InlineWrapper]) -> String {
+fn generate_source(wrappers: &[MacroWrapper], inlines: &[InlineWrapper], version: u8) -> String {
+    let wrappers: Vec<&MacroWrapper> = wrappers.iter().filter(|w| w.min_version <= version).collect();
     let mut out = String::new();
 
     for h in ETHERFABRIC_HEADERS {
@@ -251,7 +281,7 @@ fn generate_source(wrappers: &[MacroWrapper], inlines: &[InlineWrapper]) -> Stri
 
     // Step 1 – static inline helpers (macros still in scope)
     out.push_str("\n/* Step 1: helpers that call macros while they are defined */\n");
-    for w in wrappers {
+    for w in &wrappers {
         let body = if w.ret == "void" {
             format!("{{ {}({}); }}", w.name, call_args(w.args))
         } else {
@@ -280,13 +310,13 @@ fn generate_source(wrappers: &[MacroWrapper], inlines: &[InlineWrapper]) -> Stri
 
     // Step 2 – undef macros (inlines cannot be undef'd)
     out.push_str("\n/* Step 2: undefine all macros */\n");
-    for w in wrappers {
+    for w in &wrappers {
         out.push_str(&format!("#undef {}\n", w.name));
     }
 
     // Step 3 – real linkable functions
     out.push_str("\n/* Step 3: real linkable symbols */\n");
-    for w in wrappers {
+    for w in &wrappers {
         let body = if w.ret == "void" {
             format!("{{ {}({}); }}", impl_name(w.name), call_args(w.args))
         } else {
@@ -314,6 +344,22 @@ fn generate_source(wrappers: &[MacroWrapper], inlines: &[InlineWrapper]) -> Stri
     }
 
     out
+}
+
+// ── Version detection ─────────────────────────────────────────────────────────
+
+// Probes for ef_precisetime, a typedef introduced in v9. Returns 9 if found, 8 otherwise.
+fn detect_onload_major_version(include_paths: &[String], out_dir: &PathBuf) -> u8 {
+    let probe_c = out_dir.join("version_probe.c");
+    std::fs::write(&probe_c, "#include <etherfabric/ef_vi.h>\nef_precisetime _probe;\n").unwrap();
+    let mut build = cc::Build::new();
+    build.file(&probe_c);
+    for p in include_paths {
+        build.include(p);
+    }
+    let is_v9 = build.try_compile("onload_version_probe").is_ok();
+    std::fs::remove_file(&probe_c).ok();
+    if is_v9 { 9 } else { 8 }
 }
 
 // ── main ──────────────────────────────────────────────────────────────────────
@@ -361,21 +407,27 @@ fn main() {
         }
     }
 
-    // Phase 2 – generate C source and header
+    // Phase 2 – detect installed Onload major version
+    let version = detect_onload_major_version(&include_paths, &out_dir);
+    if version >= 9 {
+        println!("cargo:rustc-cfg=onload_v9");
+    }
+
+    // Phase 3 – generate C source and header
     let wrapper_h = out_dir.join("wrapper.h");
     let wrapper_c = out_dir.join("wrapper.c");
 
     std::fs::File::create(&wrapper_h)
         .unwrap()
-        .write_all(generate_header(WRAPPERS, INLINE_WRAPPERS).as_bytes())
+        .write_all(generate_header(WRAPPERS, INLINE_WRAPPERS, version).as_bytes())
         .unwrap();
 
     std::fs::File::create(&wrapper_c)
         .unwrap()
-        .write_all(generate_source(WRAPPERS, INLINE_WRAPPERS).as_bytes())
+        .write_all(generate_source(WRAPPERS, INLINE_WRAPPERS, version).as_bytes())
         .unwrap();
 
-    // Phase 3 – compile wrapper.c
+    // Phase 4 – compile wrapper.c
     let mut cc_build = cc::Build::new();
     cc_build.file(&wrapper_c);
     for p in &include_paths {
@@ -383,7 +435,7 @@ fn main() {
     }
     cc_build.compile("efvi_wrapper");
 
-    // Phase 4 – run bindgen on wrapper.h
+    // Phase 5 – run bindgen on wrapper.h
     let mut builder = bindgen::Builder::default()
         .header(wrapper_h.to_str().unwrap())
         .derive_default(true)
